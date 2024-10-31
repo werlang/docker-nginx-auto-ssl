@@ -1,3 +1,9 @@
+# About this fork
+This repo was forked from [valian/docker-nginx-auto-ssl](https://github.com/valian/docker-nginx-auto-ssl). I have made the following changes:
+
+- Changed the entrypoint.sh to entrypoint.py, a python that does exactly the same thing as the original entrypoint.sh. The reason for this is that I am more comfortable with python than bash, and if I need to make changes to the entrypoint, I would rather do it in python.
+- I wanted to rebuild the docker image for both x86 and arm architectures. The original image was built for x86 only. Check it on [Docker Hub](https://hub.docker.com/r/pswerlang/nginx-auto-ssl).
+
 # docker-nginx-auto-ssl
 *The simpliest solution to add SSL cert to your site*
 
