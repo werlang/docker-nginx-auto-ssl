@@ -17,7 +17,7 @@ ENV DIFFIE_HELLMAN='' \
 # Here we install open resty and generate dhparam.pem file.
 # You can specify DIFFIE_HELLMAN=true to force regeneration of that file on first run
 # also we create fallback ssl keys
-RUN apk --no-cache add bash openssl \
+RUN apk --no-cache add bash openssl python3 py3-pip \
     && /usr/local/openresty/luajit/bin/luarocks install lua-resty-auto-ssl $AUTO_SSL_VERSION \
     && openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
     -subj '/CN=sni-support-required-for-valid-ssl' \
@@ -28,9 +28,10 @@ RUN apk --no-cache add bash openssl \
     && rm /etc/nginx/conf.d/default.conf
 
 COPY nginx.conf snippets /usr/local/openresty/nginx/conf/
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.py /entrypoint.py
+
+RUN chmod +x /entrypoint.py
 
 VOLUME /etc/resty-auto-ssl
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]
+CMD ["python3", "/entrypoint.py"]
