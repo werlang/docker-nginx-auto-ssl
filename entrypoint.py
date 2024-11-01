@@ -21,7 +21,13 @@ if not os.path.isfile(dhparam_path):
 # Prepare configuration files for each site specified
 sites = os.environ.get("SITES")
 if sites:
-    sites_separated = sites.split(";")
+    # Check if the sites variable contains semicolons or new lines
+    if ";" in sites:
+        sites_separated = sites.split(";")
+    else:
+        # Handle multi-line input
+        sites_separated = [line.strip() for line in sites.strip().splitlines() if line.strip()]
+
     for name_eq_endpoint in sites_separated:
         server_name, server_endpoint = name_eq_endpoint.split("=")[0], name_eq_endpoint.split("=")[1]
         raw_server_endpoint = server_endpoint.split("//")[-1]

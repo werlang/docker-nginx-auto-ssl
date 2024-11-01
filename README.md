@@ -1,8 +1,10 @@
 # About this fork
-This repo was forked from [valian/docker-nginx-auto-ssl](https://github.com/valian/docker-nginx-auto-ssl). I have made the following changes:
+This repo was forked from [valian/docker-nginx-auto-ssl](https://github.com/valian/docker-nginx-auto-ssl). I have made the following enhancements:
 
-- Changed the entrypoint.sh to entrypoint.py, a python that does exactly the same thing as the original entrypoint.sh. The reason for this is that I am more comfortable with python than bash, and if I need to make changes to the entrypoint, I would rather do it in python.
-- I wanted to rebuild the docker image for both x86 and arm architectures. The original image was built for x86 only. Check it on [Docker Hub](https://hub.docker.com/r/pswerlang/nginx-auto-ssl).
+- **Entry Point Change:** The original `entrypoint.sh` has been replaced with `entrypoint.py`, a Python script that performs the same functionality. This change was made because I am more comfortable using Python for modifications and enhancements.
+- **Multiline Environment Variable Support:** The `SITES` environment variable can now be specified as a multiline string, which is particularly useful for managing multiple sites to proxy. Please see the format in the example below.
+- **Multi-Architecture Support:** The Docker image has been rebuilt to support both x86 and ARM architectures. The updated image can be found on [Docker Hub](https://hub.docker.com/r/pswerlang/nginx-auto-ssl).
+
 
 # docker-nginx-auto-ssl
 *The simpliest solution to add SSL cert to your site*
@@ -19,7 +21,9 @@ This is possible thanks to [OpenResty](https://github.com/openresty/openresty) a
 
 # Usage
 
-Quick start to generate and auto-renew certs for your blog / application:
+## Quick start
+
+To generate and automatically renew certificates for your application, use the following commands:
 
 ```Bash
 # replace these values
@@ -34,7 +38,7 @@ docker run -d \
   -e ALLOWED_DOMAINS="$DOMAIN" \
   -e SITES="$DOMAIN=$APP_ADDRESS" \
   -v ssl-data:/etc/resty-auto-ssl \
-  valian/docker-nginx-auto-ssl
+  pswerlang/nginx-auto-ssl
 
 # display logs from container, to check if everything is fine.
 docker logs nginx-auto-ssl
@@ -43,11 +47,10 @@ docker logs nginx-auto-ssl
 [Docker-compose](https://docs.docker.com/compose/) example:
 
 ```yaml
-# docker-compose.yml
-version: '2'
+# compose.yaml
 services:
   nginx:
-    image: valian/docker-nginx-auto-ssl
+    image: pswerlang/nginx-auto-ssl
     restart: on-failure
     ports:
       - 80:80
@@ -89,23 +92,30 @@ Available configuration options:
  | REDIS_DB | `db_number` | The Redis database number used by lua-resty-auto-ssl to save certificates. `0` by default |
  | REDIS_KEY_PREFIX | `some-prefix` | Prefix all keys stored in Redis with this string. `''` by default |
 
+## Proxying Multiple Sites
 
-If you want to proxy multiple sites (probably the most common case, that's why I've made it possible to achieve without custom configuration):
+If you want to proxy multiple sites, you can run:
 
-```Bash
-docker run -d \
-  --name nginx-auto-ssl \
-  --restart on-failure \
-  -p 80:80 \
-  -p 443:443 \
-  -e ALLOWED_DOMAINS=example.com \
-  -e SITES='example.com=localhost:5432;*.example.com=localhost:8080' \
-  valian/docker-nginx-auto-ssl
+```yaml
+# compose.yaml
+services:
+  nginx:
+    image: pswerlang/nginx-auto-ssl
+    restart: on-failure
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      ALLOWED_DOMAINS: 'example.com'
+      SITES: |
+        example.com=myapp:80
+        api.example.com=api:80
+        app.example.com=app:80
 ```
 
-# Customization
+## Customization
 
-## Includes from `/etc/nginx/conf.d/*.conf`
+### Includes from `/etc/nginx/conf.d/*.conf`
 
 Additional server blocks are automatically loaded from `/etc/nginx/conf.d/*.conf`. If you want to provide your own configuration, you can either use volumes or create custom image.
 
@@ -128,23 +138,26 @@ server {
 }
 ```
 
-Volumes way
+Volumes method
 
-```Bash
-# instead of $PWD, use directory with your custom configurations
-docker run -d \
-  --name nginx-auto-ssl \
-  --restart on-failure \
-  -p 80:80 \
-  -p 443:443 \
-  -v $PWD:/etc/nginx/conf.d
-  valian/docker-nginx-auto-ssl
+```yaml
+# compose.yaml
+services:
+  nginx:
+    image: pswerlang/nginx-auto-ssl
+    restart: on-failure
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      # instead of . use directory with your configurations
+      - .:/etc/nginx/conf.d
 ```
 
 Custom image way
 
 ```Dockerfile
-FROM valian/docker-nginx-auto-ssl
+FROM pswerlang/nginx-auto-ssl
 
 # instead of . use directory with your configurations
 COPY . /etc/nginx/conf.d
@@ -176,13 +189,13 @@ server {
 ```
 
 
-## Your own `nginx.conf`
+## Custom Nginx Configuration
 
-If you have custom requirements and other customization options are not enough, you can easily provide your own configuration.
+If additional customization is required, you can provide your own Nginx configuration.
 
 Example `Dockerfile`:
 ```Dockerfile
-FROM valian/docker-nginx-auto-ssl
+FROM pswerlang/nginx-auto-ssl
 
 COPY nginx.conf /usr/local/openresty/nginx/conf/
 ```
@@ -257,6 +270,7 @@ There's more to it, eg locks across all workers to only generate one certificate
 
 # CHANGELOG
 
+* **01-11-2024** - Added multi-architecture support, Python entrypoint, and multiline SITES support
 * **11-11-2019** - Added gzip support and dropped TLS 1.0 and 1.1 #33
 * **18-04-2019** - Added WebSocket support #22
 * **29-05-2017** - Fixed duplicate redirect location after container restart #2
