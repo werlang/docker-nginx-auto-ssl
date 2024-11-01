@@ -8,3 +8,4 @@ fi
 TAG=$1
 
 docker buildx build --platform linux/amd64,linux/arm64 -t pswerlang/nginx-auto-ssl:$TAG --push .
+docker buildx build --platform linux/amd64,linux/arm64 -t pswerlang/nginx-auto-ssl:latest --push .
