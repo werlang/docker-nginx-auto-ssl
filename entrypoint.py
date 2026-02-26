@@ -23,7 +23,8 @@ sites = os.environ.get("SITES")
 if sites:
     # Check if the sites variable contains semicolons or new lines
     if ";" in sites:
-        sites_separated = sites.split(";")
+        # split on semicolons and trim each resulting entry to remove extra spaces
+        sites_separated = [part.strip() for part in sites.split(";") if part.strip()]
     else:
         # Handle multi-line input
         sites_separated = [line.strip() for line in sites.strip().splitlines() if line.strip()]
